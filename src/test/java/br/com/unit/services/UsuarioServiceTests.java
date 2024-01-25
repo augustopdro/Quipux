@@ -11,36 +11,54 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Optional;
 
+
+import static org.assertj.core.api.ClassBasedNavigableIterableAssert.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
 public class UsuarioServiceTests {
+    @InjectMocks
+    private UsuarioService usuarioService;
+
     @Mock
     private UsuarioRepository usuarioRepository;
 
-    @InjectMocks
-    private UsuarioService usuarioService;
+    @Mock
+    private AuthenticationManager authenticationManager;
+
+    @Mock
+    private PasswordEncoder passwordEncoder;
+
+    @Mock
     private TokenService tokenService;
 
     @Test
-    public void cadastrar_Deve_RetornarUsuarioCadastrado() {
+    public void deveCadastrarUsuario() {
         Usuario usuario = new Usuario();
-        usuario.setId(1L);
-        usuario.setEmail("fulano@example.com");
-        usuario.setSenha("senha123");
+        usuario.setEmail("teste@email.com");
+        usuario.setSenha("123456");
 
-        when(usuarioRepository.save(usuario)).thenReturn(usuario);
-        Usuario resultado = usuarioService.cadastrar(usuario);
+        Usuario usuarioSalvo = new Usuario();
+        usuarioSalvo.setId(1L);
+        usuarioSalvo.setEmail(usuario.getEmail());
+        usuarioSalvo.setSenha(passwordEncoder.encode(usuario.getSenha()));
 
-        assertNotNull(resultado);
-        assertEquals(usuario.getId(), resultado.getId());
-        assertEquals(usuario.getEmail(), resultado.getEmail());
-        assertEquals(usuario.getSenha(), resultado.getSenha());
+        when(usuarioRepository.save(usuario)).thenReturn(usuarioSalvo);
+
+        Usuario usuarioCadastrado = usuarioService.cadastrar(usuario);
+
+        assertEquals(Optional.of(1L), usuarioCadastrado.getId());
+        assertNotEquals("123456", usuarioCadastrado.getSenha()); // Senha foi encriptada
+        verify(usuarioRepository).save(usuario);
     }
 
     @Test
@@ -60,27 +78,19 @@ public class UsuarioServiceTests {
     }
 
     @Test
-    @DisplayName("Testa login de usuário")
-    public void testLogar() {
-        // Preparação
-        String email = "fulano@exemplo.com";
-        String senha = "senhasecreta123";
-        String token = "token_gerado";
+    @DisplayName("Teste de login")
+    public void deveLogarUsuarioComCredenciaisValidas() {
+        LoginDTO credenciais = new LoginDTO("teste@email.com", "123456");
+        Authentication authentication = credenciais.toAuthentication();
+        TokenDTO tokenDTO = new TokenDTO("token", "Bearer", "PREFIX_");
 
-        LoginDTO credenciais = new LoginDTO(email, senha);
+        when(authenticationManager.authenticate(authentication)).thenReturn(authentication);
+        when(tokenService.generateToken(credenciais)).thenReturn(tokenDTO);
 
-        Usuario usuario = new Usuario();
-        usuario.setId(1L);
-        usuario.setEmail(email);
-        usuario.setSenha(senha);
+        TokenDTO tokenGerado = usuarioService.logar(credenciais);
 
-        when(usuarioRepository.buscarCredenciais(email, senha)).thenReturn(Optional.of(usuario));
-        when(tokenService.generateToken(credenciais)).thenReturn(new TokenDTO(token, "Bearer", "Bearer "));
-
-        TokenDTO resultado = usuarioService.logar(credenciais);
-
-        verify(usuarioRepository, times(1)).buscarCredenciais(email, senha);
-        assertNotNull(resultado);
-        assertEquals(token, resultado.token());
+        assertEquals(tokenGerado, tokenDTO);
+        verify(authenticationManager).authenticate(authentication);
+        verify(tokenService).generateToken(credenciais);
     }
 }
