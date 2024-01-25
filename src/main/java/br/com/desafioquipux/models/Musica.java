@@ -31,7 +31,7 @@ public class Musica {
 
     @NotNull
     @Column(nullable = false)
-    private LocalDate ano;
+    private String ano;
 
     @NotNull
     @Column(nullable = false)
