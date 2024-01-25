@@ -24,6 +24,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests()
                 .requestMatchers(HttpMethod.POST, "/api/usuario/cadastrar").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/usuario/login").permitAll()
+                .requestMatchers("/h2-console/**").permitAll()
                 .anyRequest().authenticated()
                 .and()
                 .csrf().disable()

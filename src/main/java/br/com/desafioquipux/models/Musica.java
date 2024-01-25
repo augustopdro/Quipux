@@ -1,5 +1,7 @@
 package br.com.desafioquipux.models;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
@@ -37,10 +39,19 @@ public class Musica {
     @Column(nullable = false)
     private String genero;
 
-    @ManyToMany
-    @JoinTable(
-            name = "musica_lista",
-            joinColumns = @JoinColumn(name = "musica_id"),
-            inverseJoinColumns = @JoinColumn(name = "lista_id"))
-    private List<Lista> listas;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "musica_id")
+    @JsonIgnore
+    private Lista lista;
+
+    @Override
+    public String toString() {
+        return "Musica{" +
+                "titulo='" + titulo + '\'' +
+                ", artista='" + artista + '\'' +
+                ", album='" + album + '\'' +
+                ", ano='" + ano + '\'' +
+                ", genero='" + genero + '\'' +
+                '}';
+    }
 }

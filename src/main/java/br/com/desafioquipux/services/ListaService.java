@@ -1,5 +1,6 @@
 package br.com.desafioquipux.services;
 
+import br.com.desafioquipux.dtos.AdicionarMusicaDTO;
 import br.com.desafioquipux.exceptions.RestNotFoundException;
 import br.com.desafioquipux.models.Lista;
 import br.com.desafioquipux.models.Musica;
@@ -54,11 +55,14 @@ public class ListaService {
         repository.delete(lista);
     }
 
-    public Lista salvarMusicaNaLista(String nomeDaLista, String nomeDaMusica){
-        var lista = buscarLista(nomeDaLista);
-        var musica = buscarMusica(nomeDaMusica);
+    public Lista salvarMusicaNaLista(AdicionarMusicaDTO musicaDTO){
+        var lista = buscarLista(musicaDTO.nomeDaLista());
+        var musica = buscarMusica(musicaDTO.nomeDaMusica());
+
+        if (lista == null || musica == null) {
+            throw new IllegalArgumentException("Lista ou música não encontrada");
+        }
         lista.getMusicas().add(musica);
-        musica.getListas().add(lista);
         return salvarLista(lista);
     }
 
