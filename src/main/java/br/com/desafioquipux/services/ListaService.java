@@ -2,8 +2,10 @@ package br.com.desafioquipux.services;
 
 import br.com.desafioquipux.exceptions.RestNotFoundException;
 import br.com.desafioquipux.models.Lista;
+import br.com.desafioquipux.models.Musica;
 import br.com.desafioquipux.models.Usuario;
 import br.com.desafioquipux.repositories.ListaRepository;
+import br.com.desafioquipux.repositories.MusicaRepository;
 import br.com.desafioquipux.repositories.UsuarioRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,11 +19,13 @@ public class ListaService {
 
     private ListaRepository repository;
     private UsuarioRepository usuarioRepository;
+    private MusicaRepository musicaRepository;
 
     @Autowired
-    public ListaService(ListaRepository repository, UsuarioRepository usuarioRepository) {
+    public ListaService(ListaRepository repository, UsuarioRepository usuarioRepository, MusicaRepository musicaRepository) {
         this.repository = repository;
         this.usuarioRepository = usuarioRepository;
+        this.musicaRepository = musicaRepository;
     }
 
     public Lista criarLista(Lista lista, long userId){
@@ -36,7 +40,7 @@ public class ListaService {
 
         Lista lista = repository
                 .findByName(nome)
-                .orElseThrow(() -> new RestNotFoundException("Usuario não encontrado"));
+                .orElseThrow(() -> new RestNotFoundException("Lista não encontrada"));
 
         return lista;
     }
@@ -50,6 +54,14 @@ public class ListaService {
         repository.delete(lista);
     }
 
+    public Lista salvarMusicaNaLista(String nomeDaLista, String nomeDaMusica){
+        var lista = buscarLista(nomeDaLista);
+        var musica = buscarMusica(nomeDaMusica);
+        lista.getMusicas().add(musica);
+        musica.getListas().add(lista);
+        return salvarLista(lista);
+    }
+
     private Usuario recuperarUsuario(long userId) {
         log.info("Recuperando usuario com id: " + userId);
 
@@ -58,6 +70,16 @@ public class ListaService {
                 .orElseThrow(() -> new RestNotFoundException("Usuario não encontrado"));
 
         return usuario;
+    }
+
+    private Musica buscarMusica(String nome) {
+        log.info("Recuperando musica com nome: " + nome);
+
+        Musica musica = musicaRepository
+                .findByName(nome)
+                .orElseThrow(() -> new RestNotFoundException("Musica não encontrada"));
+
+        return musica;
     }
 
     private Lista salvarLista(Lista lista){
