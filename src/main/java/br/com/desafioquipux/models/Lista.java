@@ -1,5 +1,6 @@
 package br.com.desafioquipux.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
@@ -24,4 +25,9 @@ public class Lista {
 
     @ManyToMany(mappedBy = "listas", cascade = CascadeType.ALL)
     private List<Musica> musicas;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "usuario_id")
+    @JsonIgnore
+    private Usuario usuario;
 }
